@@ -19,7 +19,7 @@ jobs:
 
       - name: Build and push final Docker image
         run: |
-          docker buildx build --target vllm-openai . \
+          docker buildx build --target vllm-openai --build-arg max_jobs=8 . \
             --tag ${{ secrets.DOCKERHUB_USERNAME }}/vllm-openai:${{ github.run_id }} \
             --tag ${{ secrets.DOCKERHUB_USERNAME }}/vllm-openai:3.2.1 \
             --tag ${{ secrets.DOCKERHUB_USERNAME }}/vllm-openai:latest \
