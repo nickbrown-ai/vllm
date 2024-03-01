@@ -17,13 +17,13 @@ WORKDIR /workspace
 
 # install build and runtime dependencies
 COPY requirements.txt requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt
+RUN pip install -r requirements.txt \
+    pip install accelerate
 
-# install development dependencies
-COPY requirements-dev.txt requirements-dev.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements-dev.txt
+## install development dependencies
+#COPY requirements-dev.txt requirements-dev.txt
+#RUN --mount=type=cache,target=/root/.cache/pip \
+#    pip install -r requirements-dev.txt
 #################### BASE BUILD IMAGE ####################
 
 
@@ -94,9 +94,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 #################### OPENAI API SERVER ####################
 # openai api server alternative
 FROM vllm-base AS vllm-openai
-# install additional dependencies for openai api server
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install accelerate
 
 COPY --from=build /workspace/vllm/*.so /workspace/vllm/
 COPY vllm vllm
