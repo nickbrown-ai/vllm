@@ -3,7 +3,7 @@ name: docker-build
 on:
   push:
     branches:
-      - 'nicks*'
+      - 'nicks-3.2.1'
 
 jobs:
   docker:
