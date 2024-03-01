@@ -6,7 +6,7 @@ on:
       - 'nicks-3.2.1'
 
 jobs:
-  docker:
+  docker-build:
     runs-on:
       labels: ubuntu-latest
     steps:
