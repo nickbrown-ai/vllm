@@ -86,8 +86,7 @@ RUN apt-get update -y \
 
 WORKDIR /workspace
 COPY requirements.txt requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt
+RUN pip install -r requirements.txt
 #################### RUNTIME BASE IMAGE ####################
 
 
