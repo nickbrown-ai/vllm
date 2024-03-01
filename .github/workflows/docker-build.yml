@@ -8,7 +8,7 @@ on:
 jobs:
   docker-build:
     runs-on:
-      labels: medium-ubuntu
+      labels: large-ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
