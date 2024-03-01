@@ -17,11 +17,13 @@ WORKDIR /workspace
 
 # install build and runtime dependencies
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 # install development dependencies
 COPY requirements-dev.txt requirements-dev.txt
-RUN pip install -r requirements-dev.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements-dev.txt
 #################### BASE BUILD IMAGE ####################
 
 
@@ -30,7 +32,8 @@ FROM dev AS build
 
 # install build dependencies
 COPY requirements-build.txt requirements-build.txt
-RUN pip install -r requirements-build.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements-build.txt
 
 # copy input files
 COPY csrc csrc
@@ -55,27 +58,27 @@ RUN python3 setup.py build_ext --inplace
 #################### EXTENSION Build IMAGE ####################
 
 
-##################### TEST IMAGE ####################
-## image to run unit testing suite
-#FROM dev AS test
-#
-## copy pytorch extensions separately to avoid having to rebuild
-## when python code changes
-#WORKDIR /vllm-workspace
-## ADD is used to preserve directory structure
-#ADD . /vllm-workspace/
-#COPY --from=build /workspace/vllm/*.so /vllm-workspace/vllm/
-## ignore build dependencies installation because we are using pre-complied extensions
-#RUN rm pyproject.toml
-#RUN --mount=type=cache,target=/root/.cache/pip VLLM_USE_PRECOMPILED=1 pip install . --verbose
-##################### TEST IMAGE ####################
+#################### TEST IMAGE ####################
+# image to run unit testing suite
+FROM dev AS test
+
+# copy pytorch extensions separately to avoid having to rebuild
+# when python code changes
+WORKDIR /vllm-workspace
+# ADD is used to preserve directory structure
+ADD . /vllm-workspace/
+COPY --from=build /workspace/vllm/*.so /vllm-workspace/vllm/
+# ignore build dependencies installation because we are using pre-complied extensions
+RUN rm pyproject.toml
+RUN --mount=type=cache,target=/root/.cache/pip VLLM_USE_PRECOMPILED=1 pip install . --verbose
+#################### TEST IMAGE ####################
 
 
-#################### OPENAI API SERVER ####################
+#################### RUNTIME BASE IMAGE ####################
 # We used base cuda image because pytorch installs its own cuda libraries.
 # However cupy depends on cuda libraries so we had to switch to the runtime image
 # In the future it would be nice to get a container with pytorch and cuda without duplicating cuda
-FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS vllm-openai
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS vllm-base
 
 # libnccl required for ray
 RUN apt-get update -y \
@@ -83,7 +86,16 @@ RUN apt-get update -y \
 
 WORKDIR /workspace
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+#################### RUNTIME BASE IMAGE ####################
+
+
+#################### OPENAI API SERVER ####################
+# openai api server alternative
+FROM vllm-base AS vllm-openai
+# install additional dependencies for openai api server
+RUN --mount=type=cache,target=/root/.cache/pip \
     pip install accelerate
 
 COPY --from=build /workspace/vllm/*.so /workspace/vllm/
