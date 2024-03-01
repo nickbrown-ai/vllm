@@ -1,0 +1,26 @@
+name: docker-build
+
+on:
+  push:
+    branches:
+      - 'nicks*'
+
+jobs:
+  docker:
+    runs-on:
+      labels: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        run: |
+          docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      - name: Build and push final Docker image
+        run: |
+          docker buildx build --target vllm-openai . \
+            --tag ${{ secrets.DOCKERHUB_USERNAME }}/vllm-openai:${{ github.run_id }} \
+            --tag ${{ secrets.DOCKERHUB_USERNAME }}/vllm-openai:3.2.1 \
+            --tag ${{ secrets.DOCKERHUB_USERNAME }}/vllm-openai:latest \
+            --push
